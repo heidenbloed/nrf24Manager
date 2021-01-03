@@ -1,0 +1,18 @@
+led_pin: 29 # GPIO for the led
+ce_pin: 22 # GPIO for the ce pin of the radio
+cs_pin: 0 # can be 0 or 1 for CE0 or CE1 (is not equal to the GPIO pin)
+retry_delay: 15 # must be between 0 an 15; delay time in steps of 250us
+max_retries: 15 # number of retries for not acknowledged send messages
+payload_length: 200 # byte length of the radio payloads
+pipes: # pipe configurations
+  writing: # configuration for writing pipe (rf24 only supports one writing pipe)
+    address: "water" # address if the writing pipe
+    topic: "home/raisedbed/control" # mqtt topic to listen for writing messages in
+    blink: no # if true, led blinks when messages was received in this topic
+  reading: # configuration for reading pipes (max 5 reading pipes are supported)
+    - address: "wwitc" # address of the reading pipe; only the least significant byte should be unique
+      topic: "home/raisedbed/" # mqtt topic to publish the received messages in
+      blink: no # if true, led blinks when messages was received at this address
+    - topic: "home/switches/"
+      address: "switc"
+      blink: yes
