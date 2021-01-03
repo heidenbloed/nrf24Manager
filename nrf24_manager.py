@@ -46,6 +46,7 @@ class Nrf24Manager:
         # enter loop
         while True:
             self.__loop()
+            time.sleep(0.01)
 
     def __loop(self):
         # receive message
