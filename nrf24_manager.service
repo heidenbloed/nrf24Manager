@@ -1,0 +1,16 @@
+[Unit]
+Description=Nrf24 radio manager
+After=multi-user.target
+
+[Service]
+Type=simple
+User=USERNAME
+ExecStart=HOMEDIR/git/nrf24Manager/nrf24_manager.py
+WorkingDirectory=HOMEDIR/git/nrf24Manager
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
