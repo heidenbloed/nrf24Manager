@@ -6,8 +6,9 @@ import logging
 import sys
 import time
 import threading
-from RF24 import RF24
+from RF24 import RF24, RF24_PA_MAX
 import RPi.GPIO as GPIO
+
 
 class Nrf24Manager:
 
@@ -35,18 +36,24 @@ class Nrf24Manager:
         self.__client.loop_start()
         # setup rf24 radio
         self.__radio = RF24(self.__radio_config["ce_pin"], self.__radio_config["cs_pin"])
+        if not self.__radio.begin():
+            raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
         self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
-        self.__radio.begin()
+        self.__radio.setPALevel(RF24_PA_MAX)
         logging.info(f'Opening writing pipe 0 with address "{self.__radio_config["pipes"]["writing"]["address"]}".')
         self.__radio.openWritingPipe(self.__radio_config["pipes"]["writing"]["address"].encode('utf-8'))
-        for pipeIdx, readingPipe in enumerate(self.__radio_config["pipes"]["reading"]):
-            logging.info(f'Opening reading pipe {pipeIdx + 1} with address "{readingPipe["address"]}".')
-            self.__radio.openReadingPipe(pipeIdx + 1, readingPipe["address"].encode('utf-8'))
+        for pipe_idx, reading_pipe in enumerate(self.__radio_config["pipes"]["reading"]):
+            logging.info(f'Opening reading pipe {pipe_idx + 1} with address "{reading_pipe["address"]}".')
+            self.__radio.openReadingPipe(pipe_idx + 1, reading_pipe["address"].encode('utf-8'))
         self.__radio.startListening()
         # enter loop
-        while True:
-            self.__loop()
-            time.sleep(0.01)
+        try:
+            while True:
+                self.__loop()
+                time.sleep(0.01)
+        except KeyboardInterrupt:
+            self.__radio.powerDown()
+            sys.exit()
 
     def __loop(self):
         # receive message
