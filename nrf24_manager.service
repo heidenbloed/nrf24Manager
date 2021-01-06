@@ -4,9 +4,9 @@ After=multi-user.target
 
 [Service]
 Type=simple
-User=USERNAME
-ExecStart=HOMEDIR/git/nrf24Manager/nrf24_manager.py
-WorkingDirectory=HOMEDIR/git/nrf24Manager
+User=root
+ExecStart=PWD/nrf24_manager.py
+WorkingDirectory=PWD
 StandardOutput=syslog
 StandardError=syslog
 Restart=always
