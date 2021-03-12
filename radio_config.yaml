@@ -8,11 +8,11 @@ pipes: # pipe configurations
   writing: # configuration for writing pipe (rf24 only supports one writing pipe)
     address: "water" # address if the writing pipe
     topic: "home/raisedbed/control" # mqtt topic to listen for writing messages in
-    blink: no # if true, led blinks when messages was received in this topic
+    blink: yes # if true, led blinks when messages was received in this topic
   reading: # configuration for reading pipes (max 5 reading pipes are supported)
     - address: "wwitc" # address of the reading pipe; only the least significant byte should be unique
       topic: "home/raisedbed/" # mqtt topic to publish the received messages in
-      blink: no # if true, led blinks when messages was received at this address
+      blink: yes # if true, led blinks when messages was received at this address
     - topic: "home/switches/"
       address: "switc"
       blink: yes
