@@ -61,21 +61,26 @@ class Nrf24Manager:
         available, pipe = self.__radio.available_pipe()
         if available:
             receive_payload = self.__radio.read(self.__radio_config["payload_length"])
-            receive_payload_str = receive_payload.split(b'\x00', 1)[0].decode('utf-8')
-            logging.info(f'Got radio message in pipe {pipe} with payload "{receive_payload_str}".')
-            pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
-            topic = pipe_config["topic"]
-            if receive_payload_str.startswith("["):
-                if receive_payload_str.startswith("[confirm]"):
-                    logging.info('Message confirmed.')
-                    return
-                else:
-                    subtopic, receive_payload_str = receive_payload_str.split("] ")
-                    topic += subtopic.replace("[", "")
-            logging.info(f"Pubish payload \"{receive_payload_str}\" in MQTT topic \"{topic}\".")
-            self.__client.publish(topic, payload=receive_payload_str, qos=2)
-            if pipe_config["blink"]:
-                self.__threaded_blink(2)
+            try:
+                receive_payload_str = receive_payload.decode('utf-8')
+                logging.info(f'Got radio message in pipe {pipe} with payload "{receive_payload_str}".')
+                pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
+                topic = pipe_config["topic"]
+                if receive_payload_str.startswith("["):
+                    if receive_payload_str.startswith("[confirm]"):
+                        logging.info('Message confirmed.')
+                        return
+                    else:
+                        subtopic, receive_payload_str = receive_payload_str.split("] ")
+                        topic += subtopic.replace("[", "")
+                logging.info(f"Pubish payload \"{receive_payload_str}\" in MQTT topic \"{topic}\".")
+                self.__client.publish(topic, payload=receive_payload_str, qos=2)
+                if pipe_config["blink"]:
+                    self.__threaded_blink(num_blinks=2)
+            except UnicodeDecodeError:
+                logging.warning(f'Got radio message in pipe {pipe}, but could not decode payload. Most likely the message got corrupted. Received payload="{receive_payload}".')
+                if self.__radio_config["pipes"]["reading"][pipe - 1]["blink"]:
+                    self.__threaded_blink(num_blinks=5)
         # send message
         if self.__writing_triggered:
             self.__writing_triggered = False
@@ -84,7 +89,7 @@ class Nrf24Manager:
             self.__radio.write(self.__writing_payload.encode('utf-8'))
             self.__radio.startListening()
             if self.__radio_config["pipes"]["writing"]["blink"]:
-                self.__threaded_blink(1)
+                self.__threaded_blink(num_blinks=1)
 
     def __threaded_blink(self, num_blinks: int):
         blink_thread = threading.Thread(target=self.__blink, args=(num_blinks,))
