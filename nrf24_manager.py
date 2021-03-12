@@ -62,6 +62,7 @@ class Nrf24Manager:
         if available:
             receive_payload = self.__radio.read(self.__radio_config["payload_length"])
             try:
+                receive_payload = receive_payload.split(b'\x00')[0]
                 receive_payload_str = receive_payload.decode('utf-8')
                 logging.info(f'Got radio message in pipe {pipe} with payload "{receive_payload_str}".')
                 pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
