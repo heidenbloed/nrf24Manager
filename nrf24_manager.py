@@ -53,6 +53,7 @@ class Nrf24Manager:
                 time.sleep(0.01)
         except KeyboardInterrupt:
             self.__radio.powerDown()
+            self.__client.loop_stop()
             sys.exit()
 
     def __loop(self):
@@ -104,14 +105,14 @@ class Nrf24Manager:
     def __on_message(self, _client, _userdata, msg):
         payload = msg.payload.decode("utf-8")
         logging.info(f"MQTT writing command with payload: {payload}")
-        self.__writing_triggered = True
         self.__writing_payload = payload
+        self.__writing_triggered = True
 
 
 if __name__ == "__main__":
     # setup logging
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S', stream=sys.stdout)
     logging.info("Start Nrf24 Manager.")
-    radio_config_file = "radio_config.yaml"
+    radio_config_file = "./radio_config.yaml"
     mqtt_config_file = "./mqtt_config.yaml"
     Nrf24Manager(radio_config_file=radio_config_file, mqtt_config_file=mqtt_config_file)
