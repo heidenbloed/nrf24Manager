@@ -61,11 +61,11 @@ class Nrf24Manager:
         available, pipe = self.__radio.available_pipe()
         if available:
             receive_payload = self.__radio.read(self.__radio_config["payload_length"])
+            pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
             try:
                 receive_payload = receive_payload.split(b'\x00')[0]
                 receive_payload_str = receive_payload.decode('utf-8')
-                logging.info(f'Got radio message in pipe {pipe} with payload "{receive_payload_str}".')
-                pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
+                logging.info(f'Got radio message in pipe "{pipe_config["address"]}" with payload "{receive_payload_str}".')
                 topic = pipe_config["topic"]
                 if receive_payload_str.startswith("["):
                     if receive_payload_str.startswith("[confirm]"):
@@ -79,13 +79,13 @@ class Nrf24Manager:
                 if pipe_config["blink"]:
                     self.__threaded_blink(num_blinks=2)
             except UnicodeDecodeError:
-                logging.warning(f'Got radio message in pipe {pipe}, but could not decode payload. Most likely the message got corrupted. Received payload="{receive_payload}".')
-                if self.__radio_config["pipes"]["reading"][pipe - 1]["blink"]:
+                logging.warning(f'Got radio message in pipe "{pipe_config["address"]}", but could not decode payload. Most likely the message got corrupted. Received payload="{receive_payload}".')
+                if pipe_config["blink"]:
                     self.__threaded_blink(num_blinks=5)
         # send message
         if self.__writing_triggered:
             self.__writing_triggered = False
-            logging.info(f'Send payload "{self.__writing_payload.encode("utf-8")}" via radio.')
+            logging.info(f'Send payload "{self.__writing_payload.encode("utf-8")}" via radio in pipe "{self.__radio_config["pipes"]["writing"]["address"]}".')
             self.__radio.stopListening()
             self.__radio.write(self.__writing_payload.encode('utf-8'))
             self.__radio.startListening()
