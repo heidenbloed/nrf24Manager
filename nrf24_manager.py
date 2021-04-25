@@ -6,7 +6,7 @@ import logging
 import sys
 import time
 import threading
-from RF24 import RF24, RF24_PA_MAX
+from RF24 import RF24, RF24_PA_LOW
 import RPi.GPIO as GPIO
 
 
@@ -38,8 +38,9 @@ class Nrf24Manager:
         self.__radio = RF24(self.__radio_config["ce_pin"], self.__radio_config["cs_pin"])
         if not self.__radio.begin():
             raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
+        self.__radio.setPALevel(RF24_PA_LOW)
+        self.__radio.setChannel(0)
         self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
-        self.__radio.setPALevel(RF24_PA_MAX)
         logging.info(f'Opening writing pipe 0 with address "{self.__radio_config["pipes"]["writing"]["address"]}".')
         self.__radio.openWritingPipe(self.__radio_config["pipes"]["writing"]["address"].encode('utf-8'))
         for pipe_idx, reading_pipe in enumerate(self.__radio_config["pipes"]["reading"]):
