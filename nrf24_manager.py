@@ -39,7 +39,7 @@ class Nrf24Manager:
         if not self.__radio.begin():
             raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
         self.__radio.setPALevel(RF24_PA_LOW)
-        self.__radio.setChannel(0)
+        self.__radio.setPayloadSize(32)
         self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
         logging.info(f'Opening writing pipe 0 with address "{self.__radio_config["pipes"]["writing"]["address"]}".')
         self.__radio.openWritingPipe(self.__radio_config["pipes"]["writing"]["address"].encode('utf-8'))
@@ -86,9 +86,11 @@ class Nrf24Manager:
         # send message
         if self.__writing_triggered:
             self.__writing_triggered = False
-            logging.info(f'Send payload "{self.__writing_payload.encode("utf-8")}" via radio in pipe "{self.__radio_config["pipes"]["writing"]["address"]}".')
+            encoded_payload = self.__writing_payload.encode('utf-8')
+            encoded_payload = encoded_payload[:32]
+            logging.info(f'Send payload "{encoded_payload}" via radio in pipe "{self.__radio_config["pipes"]["writing"]["address"]}".')
             self.__radio.stopListening()
-            self.__radio.write(self.__writing_payload.encode('utf-8'))
+            self.__radio.write(encoded_payload)
             self.__radio.startListening()
             if self.__radio_config["pipes"]["writing"]["blink"]:
                 self.__threaded_blink(num_blinks=1)
