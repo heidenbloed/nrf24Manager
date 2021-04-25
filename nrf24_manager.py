@@ -38,6 +38,7 @@ class Nrf24Manager:
         self.__radio = RF24(self.__radio_config["ce_pin"], self.__radio_config["cs_pin"])
         if not self.__radio.begin():
             raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
+        self.__radio.setChannel(0)
         self.__radio.setPALevel(RF24_PA_LOW)
         self.__radio.setPayloadSize(32)
         self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
