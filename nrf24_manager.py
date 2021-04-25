@@ -70,12 +70,14 @@ class Nrf24Manager:
                 logging.info(f'Got radio message in pipe "{pipe_config["address"]}" with payload "{receive_payload_str}".')
                 topic = pipe_config["topic"]
                 if receive_payload_str.startswith("["):
-                    if receive_payload_str.startswith("[confirm]"):
+                    if receive_payload_str.startswith("[c]") or receive_payload_str.startswith("[confirm]"):
                         logging.info('Message confirmed.')
                         return
                     else:
-                        subtopic, receive_payload_str = receive_payload_str.split("] ")
-                        topic += subtopic.replace("[", "")
+                        receive_payload_str_split = receive_payload_str.split("] ")
+                        subtopic = receive_payload_str_split[0].replace("[", "")
+                        receive_payload_str = "] ".join(receive_payload_str_split[1:])
+                        topic += subtopic
                 logging.info(f"Pubish payload \"{receive_payload_str}\" in MQTT topic \"{topic}\".")
                 self.__client.publish(topic, payload=receive_payload_str, qos=2)
                 if pipe_config["blink"]:
