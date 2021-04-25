@@ -38,9 +38,9 @@ class Nrf24Manager:
         self.__radio = RF24(self.__radio_config["ce_pin"], self.__radio_config["cs_pin"])
         if not self.__radio.begin():
             raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
-        self.__radio.setChannel(0)
+        self.__radio.setChannel(self.__radio_config["channel"])
         self.__radio.setPALevel(RF24_PA_LOW)
-        self.__radio.setPayloadSize(32)
+        self.__radio.setPayloadSize(self.__radio_config["payload_size"])
         self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
         logging.info(f'Opening writing pipe 0 with address "{self.__radio_config["pipes"]["writing"]["address"]}".')
         self.__radio.openWritingPipe(self.__radio_config["pipes"]["writing"]["address"].encode('utf-8'))
@@ -62,7 +62,7 @@ class Nrf24Manager:
         # receive message
         available, pipe = self.__radio.available_pipe()
         if available:
-            receive_payload = self.__radio.read(self.__radio_config["payload_length"])
+            receive_payload = self.__radio.read(self.__radio_config["payload_size"])
             pipe_config = self.__radio_config["pipes"]["reading"][pipe - 1]
             try:
                 receive_payload = receive_payload.split(b'\x00')[0]
