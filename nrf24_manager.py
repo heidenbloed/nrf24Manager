@@ -6,7 +6,7 @@ import logging
 import sys
 import time
 import threading
-from RF24 import RF24, RF24_PA_LOW
+from RF24 import RF24, RF24_PA_LOW, RF24_250KBPS, RF24_CRC_8
 import RPi.GPIO as GPIO
 
 
@@ -39,9 +39,16 @@ class Nrf24Manager:
         if not self.__radio.begin():
             raise RuntimeError("RF24 hardware is not responding. Maybe the pins are not correct.")
         self.__radio.setChannel(self.__radio_config["channel"])
+        if not self.__radio.setDataRate(RF24_250KBPS):
+            raise RuntimeError("Could not set radio data rate correctly.")
+        self.__radio.setAutoAck(True)
+        self.__radio.enableDynamicPayloads()
+        self.__radio.setCRCLength(RF24_CRC_8)
         self.__radio.setPALevel(RF24_PA_LOW)
-        self.__radio.setPayloadSize(self.__radio_config["payload_size"])
-        self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
+        if not self.__radio.isPVariant():
+            logging.warning("Warning: The radio is not a nRF24L01+ radio.")
+        #self.__radio.setPayloadSize(self.__radio_config["payload_size"])
+        #self.__radio.setRetries(self.__radio_config["retry_delay"], self.__radio_config["max_retries"])
         logging.info(f'Opening writing pipe 0 with address "{self.__radio_config["pipes"]["writing"]["address"]}".')
         self.__radio.openWritingPipe(self.__radio_config["pipes"]["writing"]["address"].encode('utf-8'))
         for pipe_idx, reading_pipe in enumerate(self.__radio_config["pipes"]["reading"]):
@@ -93,7 +100,8 @@ class Nrf24Manager:
             encoded_payload = encoded_payload[:32]
             logging.info(f'Send payload "{encoded_payload}" via radio in pipe "{self.__radio_config["pipes"]["writing"]["address"]}".')
             self.__radio.stopListening()
-            self.__radio.write(encoded_payload)
+            if not self.__radio.write(encoded_payload):
+                logging.warning("Sending the message via radio was not successful.")
             self.__radio.startListening()
             if self.__radio_config["pipes"]["writing"]["blink"]:
                 self.__threaded_blink(num_blinks=1)
